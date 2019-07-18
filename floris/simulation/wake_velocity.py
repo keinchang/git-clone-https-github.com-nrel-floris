@@ -911,10 +911,28 @@ class Curl(WakeVelocity):
                 * ti_initial**ti_i \
                 * ((x[i] - turbine_coord.x1) / turbine.rotor_diameter)**ti_downstream
 
+            if turbine_coord.x1 > 1760:
+                ti_local = 0.2*10               # non-yawead: 0.2, T1 yawed: 0.13
+            elif turbine_coord.x1 > 1000:
+                ti_local = 0.29*10              # non-yawead: 0.29, T1 yawed: 0.13
+            elif turbine_coord.x1 > 250:
+                ti_local = 0.0775*10            # non-yawead: 0.0775, T1 yawed: 0.0775
+            else:
+                ti_local = 0.1*10               # non-yawead: 0.1, T1 yawed: 0.1
+
+            # ti_local = np.sqrt(ti_local_tmp**2 + 0.1**2)
+            # ti_local = 1.0
+
             # solve the marching problem for u, v, and w
             uw[i, :, :] = uw[i - 1, :, :] + (dx / (U[i - 1, :, :])) \
                 * (-V[i - 1, :, :] * dudy - W[i - 1, :, :] * dudz
                    + dissipation * D * nu * ti_local * gradU)
+
+            # print('dissipation: ', np.min(dissipation))
+            # print('diameter: ', np.min(D))
+            # print('nu: ', np.min(nu))
+            # print('ti_local: ', np.min(ti_local))
+            # print('gradU: ', np.min(gradU))
             # enforce boundary conditions
             uw[i, :, 0] = np.zeros(len(y))
             uw[i, 0, :] = np.zeros(len(z))
