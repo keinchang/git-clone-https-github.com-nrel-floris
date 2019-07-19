@@ -235,9 +235,9 @@ class Turbine():
 
         # user-input turbulence intensity parameters
         ti_i = velocity_model.ti_initial
-        ti_constant = velocity_model.ti_constant
+        ti_constant = 1.0 # velocity_model.ti_constant
         ti_ai = velocity_model.ti_ai
-        ti_downstream = velocity_model.ti_downstream
+        ti_downstream = -0.1 # velocity_model.ti_downstream
 
         # turbulence intensity calculation based on Crespo et. al.
         ti_calculation = ti_constant \

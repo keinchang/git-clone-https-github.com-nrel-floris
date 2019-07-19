@@ -16,10 +16,10 @@ import matplotlib.pyplot as plt
 from abc import ABCMeta, abstractmethod
 from itertools import repeat
 
-try:
-    from mpi4py.futures import MPIPoolExecutor
-except ImportError:
-    pass
+# try:
+#     from mpi4py.futures import MPIPoolExecutor
+# except ImportError:
+#     pass
 
 # import warnings
 # warnings.simplefilter('ignore', RuntimeWarning)
@@ -473,136 +473,136 @@ class YawOptimizationWindRose(Optimization):
         return df_opt
 
 
-class YawOptimizationWindRoseParallel(YawOptimizationWindRose):
-    """
-    Sub class of the :py:class`floris.tools.optimization.Optimization`
-    object class that performs yaw optimization.
-    """
-
-    def _get_power_for_yaw_angle_opt(self, yaw_angles):
-        """
-        Assign yaw angles to turbines, calculate wake, report power
-
-        Args:
-            yaw_angles (np.array): yaw to apply to each turbine
-
-        Returns:
-            power (float): wind plant power. #TODO negative? in kW?
-        """
-
-        self.fi.calculate_wake(yaw_angles=yaw_angles)
-        # self.floris.farm.set_yaw_angles(yaw_angles, calculate_wake=True)
-
-        power = -1 * np.sum(self.fi.get_turbine_power())
-
-        return power / (10**3)
-
-    def _optimize(self):
-        """
-        Find optimum setting of turbine yaw angles for power production
-        given fixed atmospheric conditins (wind speed, direction, etc.).
-
-        Returns:
-            opt_yaw_angles (np.array): optimal yaw angles of each turbine.
-        """
-        self.residual_plant = minimize(self._get_power_for_yaw_angle_opt,
-                                self.x0,
-                                method=self.opt_method,
-                                bounds=self.bnds,
-                                options=self.opt_options)
-
-        opt_yaw_angles = self.residual_plant.x
-
-        return opt_yaw_angles
-
-    def optimize_one_case(self,ws,wd,freq):
-
-        print('Computing wind speed = '+str(ws)+' m/s, wind direction = '+str(wd)+' deg.')
-
-        # Find baseline power in FLORIS
-
-        if ws >= self.minimum_ws:
-            self.fi.reinitialize_flow_field(wind_direction=wd, wind_speed=ws)
-            # calculate baseline power
-            self.fi.calculate_wake()
-            power_base = self.fi.get_turbine_power()
-
-            # calculate power for no wake case
-            self.fi.calculate_wake(no_wake=True)
-            power_no_wake = self.fi.get_turbine_power()
-        else:
-            power_base = self.nturbs*[0.0]
-            power_no_wake = self.nturbs*[0.0]
-
-        # add variables to dataframe
-        df_base = pd.DataFrame({'ws':[ws],'wd':[ws], \
-            'power_baseline':[np.sum(power_base)],'turbine_power_baseline':[power_base], \
-            'power_no_wake':[np.sum(power_no_wake)],'turbine_power_no_wake':[power_no_wake]})
-
-        # Optimizing wake redirection control
-
-        if (ws >= self.minimum_ws) & (ws <= self.maximum_ws):
-            self.fi.reinitialize_flow_field(
-                wind_direction=wd, wind_speed=ws)
-
-            opt_yaw_angles = self._optimize()
-
-            if np.sum(opt_yaw_angles) == 0:
-                print('No change in controls suggested for this inflow \
-                    condition...')
-
-            # optimized power
-            self.fi.calculate_wake(yaw_angles=opt_yaw_angles)
-            power_opt = self.fi.get_turbine_power()
-        elif ws >= self.minimum_ws:
-            print('No change in controls suggested for this inflow \
-                    condition...')
-            self.fi.reinitialize_flow_field(
-                wind_direction=wd, wind_speed=ws)
-            self.fi.calculate_wake(yaw_angles=0.0)
-            opt_yaw_angles = self.nturbs*[0.0]
-            power_opt = self.fi.get_turbine_power()
-        else:
-            print('No change in controls suggested for this inflow \
-                    condition...')
-            opt_yaw_angles = self.nturbs*[0.0]
-            power_opt = self.nturbs*[0.0]
-
-        # add variables to dataframe
-        df_opt = pd.DataFrame({'ws':[ws],'wd':[wd], \
-            'power_opt':[np.sum(power_opt)],'turbine_power_opt':[power_opt],'yaw_angles':[opt_yaw_angles]})
-
-        return ws, wd, freq, df_base, df_opt
-
-    def optimize(self):
-        """
-        Find optimum setting of turbine yaw angles for power production
-        for a series of (wind speed, direction) pairs.
-
-        Returns:
-            opt_yaw_angles (np.array): optimal yaw angles of each turbine.
-        """
-
-        print('=====================================================')
-        print('Optimizing wake redirection control in parallel...')
-        print('Number of wind speed, wind direction pairs to optimize = ', len(self.wd))
-        print('Number of yaw angles to optimize = ', len(self.x0))
-        print('=====================================================')
-
-        df_base = pd.DataFrame()
-        df_opt = pd.DataFrame()
-
-        with MPIPoolExecutor() as executor: 
-            for ws, wd, freq, df_base_one, df_opt_one in executor.map(self.optimize_one_case,self.ws.values,self.wd.values,self.freq.values):
-            
-                # add variables to dataframe
-                df_base = df_base.append(df_base_one)
-                df_opt = df_opt.append(df_opt_one)
-        
-        df_base.reset_index(inplace=True)
-        df_opt.reset_index(inplace=True)
-
-        return df_base, df_opt
+# class YawOptimizationWindRoseParallel(YawOptimizationWindRose):
+#     """
+#     Sub class of the :py:class`floris.tools.optimization.Optimization`
+#     object class that performs yaw optimization.
+#     """
+#
+#     def _get_power_for_yaw_angle_opt(self, yaw_angles):
+#         """
+#         Assign yaw angles to turbines, calculate wake, report power
+#
+#         Args:
+#             yaw_angles (np.array): yaw to apply to each turbine
+#
+#         Returns:
+#             power (float): wind plant power. #TODO negative? in kW?
+#         """
+#
+#         self.fi.calculate_wake(yaw_angles=yaw_angles)
+#         # self.floris.farm.set_yaw_angles(yaw_angles, calculate_wake=True)
+#
+#         power = -1 * np.sum(self.fi.get_turbine_power())
+#
+#         return power / (10**3)
+#
+#     def _optimize(self):
+#         """
+#         Find optimum setting of turbine yaw angles for power production
+#         given fixed atmospheric conditins (wind speed, direction, etc.).
+#
+#         Returns:
+#             opt_yaw_angles (np.array): optimal yaw angles of each turbine.
+#         """
+#         self.residual_plant = minimize(self._get_power_for_yaw_angle_opt,
+#                                 self.x0,
+#                                 method=self.opt_method,
+#                                 bounds=self.bnds,
+#                                 options=self.opt_options)
+#
+#         opt_yaw_angles = self.residual_plant.x
+#
+#         return opt_yaw_angles
+#
+#     def optimize_one_case(self,ws,wd,freq):
+#
+#         print('Computing wind speed = '+str(ws)+' m/s, wind direction = '+str(wd)+' deg.')
+#
+#         # Find baseline power in FLORIS
+#
+#         if ws >= self.minimum_ws:
+#             self.fi.reinitialize_flow_field(wind_direction=wd, wind_speed=ws)
+#             # calculate baseline power
+#             self.fi.calculate_wake()
+#             power_base = self.fi.get_turbine_power()
+#
+#             # calculate power for no wake case
+#             self.fi.calculate_wake(no_wake=True)
+#             power_no_wake = self.fi.get_turbine_power()
+#         else:
+#             power_base = self.nturbs*[0.0]
+#             power_no_wake = self.nturbs*[0.0]
+#
+#         # add variables to dataframe
+#         df_base = pd.DataFrame({'ws':[ws],'wd':[ws], \
+#             'power_baseline':[np.sum(power_base)],'turbine_power_baseline':[power_base], \
+#             'power_no_wake':[np.sum(power_no_wake)],'turbine_power_no_wake':[power_no_wake]})
+#
+#         # Optimizing wake redirection control
+#
+#         if (ws >= self.minimum_ws) & (ws <= self.maximum_ws):
+#             self.fi.reinitialize_flow_field(
+#                 wind_direction=wd, wind_speed=ws)
+#
+#             opt_yaw_angles = self._optimize()
+#
+#             if np.sum(opt_yaw_angles) == 0:
+#                 print('No change in controls suggested for this inflow \
+#                     condition...')
+#
+#             # optimized power
+#             self.fi.calculate_wake(yaw_angles=opt_yaw_angles)
+#             power_opt = self.fi.get_turbine_power()
+#         elif ws >= self.minimum_ws:
+#             print('No change in controls suggested for this inflow \
+#                     condition...')
+#             self.fi.reinitialize_flow_field(
+#                 wind_direction=wd, wind_speed=ws)
+#             self.fi.calculate_wake(yaw_angles=0.0)
+#             opt_yaw_angles = self.nturbs*[0.0]
+#             power_opt = self.fi.get_turbine_power()
+#         else:
+#             print('No change in controls suggested for this inflow \
+#                     condition...')
+#             opt_yaw_angles = self.nturbs*[0.0]
+#             power_opt = self.nturbs*[0.0]
+#
+#         # add variables to dataframe
+#         df_opt = pd.DataFrame({'ws':[ws],'wd':[wd], \
+#             'power_opt':[np.sum(power_opt)],'turbine_power_opt':[power_opt],'yaw_angles':[opt_yaw_angles]})
+#
+#         return ws, wd, freq, df_base, df_opt
+#
+#     def optimize(self):
+#         """
+#         Find optimum setting of turbine yaw angles for power production
+#         for a series of (wind speed, direction) pairs.
+#
+#         Returns:
+#             opt_yaw_angles (np.array): optimal yaw angles of each turbine.
+#         """
+#
+#         print('=====================================================')
+#         print('Optimizing wake redirection control in parallel...')
+#         print('Number of wind speed, wind direction pairs to optimize = ', len(self.wd))
+#         print('Number of yaw angles to optimize = ', len(self.x0))
+#         print('=====================================================')
+#
+#         df_base = pd.DataFrame()
+#         df_opt = pd.DataFrame()
+#
+#         with MPIPoolExecutor() as executor:
+#             for ws, wd, freq, df_base_one, df_opt_one in executor.map(self.optimize_one_case,self.ws.values,self.wd.values,self.freq.values):
+#
+#                 # add variables to dataframe
+#                 df_base = df_base.append(df_base_one)
+#                 df_opt = df_opt.append(df_opt_one)
+#
+#         df_base.reset_index(inplace=True)
+#         df_opt.reset_index(inplace=True)
+#
+#         return df_base, df_opt
 
 
 class LayoutOptimization(Optimization):

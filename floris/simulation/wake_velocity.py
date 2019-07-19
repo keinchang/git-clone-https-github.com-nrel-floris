@@ -886,6 +886,7 @@ class Curl(WakeVelocity):
         ti_constant = self.ti_constant
         ti_ai = self.ti_ai
         ti_downstream = self.ti_downstream
+        print('Turbine TI = ', turbine.turbulence_intensity)
 
         for i in range(idx + 1, len(x)):
 
@@ -906,22 +907,23 @@ class Curl(WakeVelocity):
             nu = lm**2 * np.abs(dudz_initial[i - 1, :, :])
 
             # turbulence intensity calculation based on Crespo et. al.
-            ti_local = 10*ti_constant \
-                * turbine.aI**ti_ai \
-                * ti_initial**ti_i \
-                * ((x[i] - turbine_coord.x1) / turbine.rotor_diameter)**ti_downstream
-
-            if turbine_coord.x1 > 1760:
-                ti_local = 0.2*10               # non-yawead: 0.2, T1 yawed: 0.13
-            elif turbine_coord.x1 > 1000:
-                ti_local = 0.29*10              # non-yawead: 0.29, T1 yawed: 0.13
-            elif turbine_coord.x1 > 250:
-                ti_local = 0.0775*10            # non-yawead: 0.0775, T1 yawed: 0.0775
-            else:
-                ti_local = 0.1*10               # non-yawead: 0.1, T1 yawed: 0.1
+            # ti_local = 10*ti_constant \
+            #     * turbine.aI**ti_ai \
+            #     * ti_initial**ti_i \
+            #     * ((x[i] - turbine_coord.x1) / turbine.rotor_diameter)**ti_downstream
+            #
+            # if turbine_coord.x1 > 1760:
+            #     ti_local = 0.2*10               # non-yawead: 0.2, T1 yawed: 0.13
+            # elif turbine_coord.x1 > 1000:
+            #     ti_local = 0.29*10              # non-yawead: 0.29, T1 yawed: 0.13
+            # elif turbine_coord.x1 > 250:
+            #     ti_local = 0.0775*10            # non-yawead: 0.0775, T1 yawed: 0.0775
+            # else:
+            #     ti_local = 0.1*10               # non-yawead: 0.1, T1 yawed: 0.1
 
             # ti_local = np.sqrt(ti_local_tmp**2 + 0.1**2)
             # ti_local = 1.0
+            ti_local = 10*turbine.turbulence_intensity
 
             # solve the marching problem for u, v, and w
             uw[i, :, :] = uw[i - 1, :, :] + (dx / (U[i - 1, :, :])) \
