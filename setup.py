@@ -37,7 +37,7 @@ VERSION = '1.0.0'
 REQUIRED = [
     # simulation
     'matplotlib>=3',
-    'numpy==1.16.3',
+    'numpy==1.22.0',
     'pytest>=4',
     'scipy==1.1.0',
 
